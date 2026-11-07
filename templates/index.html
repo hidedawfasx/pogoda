@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Погода</title>
+    <title>{% if city %}{{ city }} — Погода{% else %}Погода{% endif %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
-<body>
+<body data-kind="{{ now.kind if now else 'clear' }}" data-theme="cycle">
 
     <div class="sky"></div>
 
@@ -23,42 +23,273 @@
         <div class="cloud"><div class="puff"></div></div>
     </div>
 
+    <div class="weather-fx" id="weatherFx"></div>
+
     <main class="card">
-        <h1 class="title">Погода</h1>
+        <header class="topbar">
+            <div class="brand">
+                <span class="brand-dot"></span>
+                <h1 class="title">Погода</h1>
+            </div>
+            <div class="controls">
+                <button type="button" class="ctrl-btn" id="themeBtn" title="Режим неба">🌗 Авто</button>
+                <button type="button" class="ctrl-btn" id="unitBtn" title="Единицы измерения">°C</button>
+                <button type="button" class="ctrl-btn" id="geoBtn" title="Моё местоположение">📍</button>
+            </div>
+        </header>
 
         {% if not days %}
-        <p class="hint">Прогноз на 7 дней, температура днём и ночью, осадки</p>
+        <p class="hint">Живой прогноз на 24 часа и 7 дней, радар метрик и умные подсказки</p>
         {% endif %}
 
-        <form class="search" method="POST">
-            <input type="text" name="city" placeholder="Твой город" value="{{ city }}" required>
-            <button type="submit">Показать</button>
+        <form class="search" method="POST" action="/">
+            <input type="text" name="city" id="cityInput" placeholder="Введите город..." value="{{ city }}" required autocomplete="off">
+            <button type="submit">Найти</button>
         </form>
 
+        <div class="chips" id="chipsContainer">
+            {% for item in popular %}
+            <a href="/?city={{ item }}" class="chip {% if city == item %}active{% endif %}">{{ item }}</a>
+            {% endfor %}
+        </div>
+
         {% if error %}
-        <p class="error">{{ error }}</p>
+        <div class="error">{{ error }}</div>
         {% endif %}
 
         {% if days %}
         <section class="result">
-            <p class="city">{{ city }}</p>
-            <p class="icon">{{ now.icon }}</p>
-            <p class="temp">{{ now.temp }}°</p>
-            <p class="text">{{ now.text }} · ветер {{ now.wind }} км/ч</p>
-
-            <div class="days">
-                {% for day in days %}
-                <div class="day">
-                    <span class="day-name">{{ day.name }}</span>
-                    <span class="day-icon">{{ day.icon }}</span>
-                    <span class="day-rain">{% if day.rain > 0 %}💧 {{ day.rain }} мм{% endif %}</span>
-                    <span class="day-temp"><b>{{ day.max }}°</b> <i>{{ day.min }}°</i></span>
+            <div class="hero">
+                <div class="location-row">
+                    <div>
+                        <h2 class="city">{{ city }}</h2>
+                        {% if country %}
+                        <p class="country">{{ country }}</p>
+                        {% endif %}
+                    </div>
+                    <button type="button" class="fav-btn" id="favBtn" data-city="{{ city }}" title="В избранное">☆</button>
                 </div>
-                {% endfor %}
+
+                <div class="hero-main">
+                    <div class="icon">{{ now.icon }}</div>
+                    <div class="temp-wrap">
+                        <p class="temp"><span class="temp-val" data-c="{{ now.temp }}">{{ now.temp }}</span>°</p>
+                        <p class="text">{{ now.text }}</p>
+                    </div>
+                </div>
+
+                <div class="sub-temps">
+                    <span>Ощущается как <b class="temp-val" data-c="{{ now.feels_like }}">{{ now.feels_like }}</b>°</span>
+                    <span class="dot">•</span>
+                    <span>Макс. <b class="temp-val" data-c="{{ now.today_max }}">{{ now.today_max }}</b>°</span>
+                    <span class="dot">•</span>
+                    <span>Мин. <b class="temp-val" data-c="{{ now.today_min }}">{{ now.today_min }}</b>°</span>
+                </div>
+
+                <div class="advice-banner">
+                    {{ now.advice }}
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-title">Почасовой прогноз</div>
+                <div class="hourly-scroll">
+                    {% for h in hourly %}
+                    <div class="hour-item {% if loop.first %}active{% endif %}">
+                        <span class="hour-time">{{ h.time }}</span>
+                        <span class="hour-icon">{{ h.icon }}</span>
+                        <span class="hour-prob">{% if h.prob >= 20 %}💧{{ h.prob }}%{% endif %}</span>
+                        <span class="hour-temp"><b class="temp-val" data-c="{{ h.temp }}">{{ h.temp }}</b>°</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <span class="metric-label">💨 Ветер</span>
+                    <strong class="metric-value">{{ now.wind }} <small>км/ч</small></strong>
+                    <span class="metric-sub">Порывы до {{ now.gusts }} км/ч</span>
+                </div>
+                <div class="metric-card">
+                    <span class="metric-label">💧 Влажность</span>
+                    <strong class="metric-value">{{ now.humidity }}<small>%</small></strong>
+                    <div class="mini-bar"><div class="mini-fill" style="width: {{ now.humidity }}%"></div></div>
+                </div>
+                <div class="metric-card">
+                    <span class="metric-label">🧭 Давление</span>
+                    <strong class="metric-value">{{ now.pressure }}</strong>
+                    <span class="metric-sub">мм рт. ст.</span>
+                </div>
+                <div class="metric-card">
+                    <span class="metric-label">☀️ УФ-индекс</span>
+                    <strong class="metric-value">{{ now.uv }}</strong>
+                    <span class="metric-sub">{{ now.uv_label }}</span>
+                </div>
+                <div class="metric-card">
+                    <span class="metric-label">🌅 Солнце</span>
+                    <strong class="metric-value">{{ now.sunrise }}</strong>
+                    <span class="metric-sub">Закат в {{ now.sunset }}</span>
+                </div>
+                <div class="metric-card">
+                    <span class="metric-label">☔ Осадки</span>
+                    <strong class="metric-value">{{ now.rain_prob }}<small>%</small></strong>
+                    <span class="metric-sub">Сегодня {{ days[0].rain }} мм</span>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-title">Прогноз на 7 дней</div>
+                <div class="days">
+                    {% for day in days %}
+                    <div class="day">
+                        <div class="day-left">
+                            <span class="day-name">{{ day.name }}</span>
+                            <span class="day-date">{{ day.date }}</span>
+                        </div>
+                        <div class="day-mid">
+                            <span class="day-icon" title="{{ day.text }}">{{ day.icon }}</span>
+                            {% if day.prob >= 20 %}
+                            <span class="day-prob">{{ day.prob }}%</span>
+                            {% endif %}
+                        </div>
+                        <div class="day-range">
+                            <span class="range-min"><i class="temp-val" data-c="{{ day.min }}">{{ day.min }}</i>°</span>
+                            <div class="range-track">
+                                <div class="range-fill" style="left: {{ day.bar_left }}%; width: {{ day.bar_width }}%;"></div>
+                            </div>
+                            <span class="range-max"><b class="temp-val" data-c="{{ day.max }}">{{ day.max }}</b>°</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
             </div>
         </section>
         {% endif %}
     </main>
 
+    <script>
+        const body = document.body;
+        const themeBtn = document.getElementById("themeBtn");
+        const unitBtn = document.getElementById("unitBtn");
+        const geoBtn = document.getElementById("geoBtn");
+        const favBtn = document.getElementById("favBtn");
+        const chipsContainer = document.getElementById("chipsContainer");
+        const weatherFx = document.getElementById("weatherFx");
+
+        const themes = ["cycle", "day", "night"];
+        const themeLabels = { cycle: "🌗 Авто", day: "☀️ День", night: "🌙 Ночь" };
+        let currentThemeIdx = 0;
+        let isFahrenheit = false;
+
+        themeBtn.addEventListener("click", () => {
+            currentThemeIdx = (currentThemeIdx + 1) % themes.length;
+            const mode = themes[currentThemeIdx];
+            body.setAttribute("data-theme", mode);
+            themeBtn.textContent = themeLabels[mode];
+        });
+
+        unitBtn.addEventListener("click", () => {
+            isFahrenheit = !isFahrenheit;
+            unitBtn.textContent = isFahrenheit ? "°F" : "°C";
+            document.querySelectorAll(".temp-val").forEach(el => {
+                const c = parseFloat(el.getAttribute("data-c"));
+                el.textContent = isFahrenheit ? Math.round(c * 9 / 5 + 32) : Math.round(c);
+            });
+        });
+
+        geoBtn.addEventListener("click", () => {
+            if (!navigator.geolocation) {
+                alert("Геолокация не поддерживается вашим браузером");
+                return;
+            }
+            geoBtn.textContent = "⏳";
+            navigator.geolocation.getCurrentPosition(
+                pos => {
+                    const lat = pos.coords.latitude.toFixed(4);
+                    const lon = pos.coords.longitude.toFixed(4);
+                    window.location.href = `/?lat=${lat}&lon=${lon}`;
+                },
+                () => {
+                    geoBtn.textContent = "📍";
+                    alert("Не удалось получить доступ к геолокации");
+                }
+            );
+        });
+
+        function getFavs() {
+            try {
+                return JSON.parse(localStorage.getItem("weather_favs") || "[]");
+            } catch {
+                return [];
+            }
+        }
+
+        function renderFavChips() {
+            document.querySelectorAll(".chip.fav-chip").forEach(e => e.remove());
+            const favs = getFavs();
+            favs.forEach(c => {
+                const exists = Array.from(chipsContainer.querySelectorAll(".chip")).some(
+                    el => el.textContent.replace("★ ", "").trim().toLowerCase() === c.toLowerCase()
+                );
+                if (!exists) {
+                    const a = document.createElement("a");
+                    a.href = `/?city=${encodeURIComponent(c)}`;
+                    a.className = "chip fav-chip";
+                    a.textContent = `★ ${c}`;
+                    chipsContainer.prepend(a);
+                }
+            });
+        }
+
+        if (favBtn) {
+            const currentCity = favBtn.getAttribute("data-city");
+            const updateStar = () => {
+                const favs = getFavs();
+                const isFav = favs.includes(currentCity);
+                favBtn.textContent = isFav ? "★" : "☆";
+                favBtn.classList.toggle("is-fav", isFav);
+            };
+            updateStar();
+            favBtn.addEventListener("click", () => {
+                let favs = getFavs();
+                if (favs.includes(currentCity)) {
+                    favs = favs.filter(x => x !== currentCity);
+                } else {
+                    favs.unshift(currentCity);
+                }
+                localStorage.setItem("weather_favs", JSON.stringify(favs.slice(0, 6)));
+                updateStar();
+                renderFavChips();
+            });
+        }
+
+        renderFavChips();
+
+        const kind = body.getAttribute("daa-kind");
+        if (kind === "rain" || kind === "storm") {
+            for (let i = 0; i < 45; i++) {
+                const drop = document.createElement("span");
+                drop.className = "raindrop";
+                drop.style.left = `${Math.random() * 100}vw`;
+                drop.style.animationDuration = `${0.55 + Math.random() * 0.45}s`;
+                drop.style.animationDelay = `${Math.random() * 2}s`;
+                drop.style.opacity = `${0.25 + Math.random() * 0.45}`;
+                weatherFx.appendChild(drop);
+            }
+        } else if (kind === "snow") {
+            for (let i = 0; i < 40; i++) {
+                const flake = document.createElement("span");
+                flake.className = "snowflake";
+                flake.style.left = `${Math.random() * 100}vw`;
+                const size = 4 + Math.random() * 6;
+                flake.style.width = `${size}px`;
+                flake.style.height = `${size}px`;
+                flake.style.animationDuration = `${3 + Math.random() * 4}s`;
+                flake.style.animationDelay = `${Math.random() * 5}s`;
+                weatherFx.appendChild(flake);
+            }
+        }
+    </script>
 </body>
 </html>
