@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Погода</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+    <div class="sky"></div>
+
+    <div class="orbit">
+        <div class="sun"></div>
+        <div class="moon"></div>
+    </div>
+
+    <div class="clouds">
+        <div class="cloud"><div class="puff"></div></div>
+        <div class="cloud"><div class="puff"></div></div>
+        <div class="cloud"><div class="puff"></div></div>
+        <div class="cloud"><div class="puff"></div></div>
+        <div class="cloud"><div class="puff"></div></div>
+    </div>
+
+    <main class="card">
+        <h1 class="title">Погода</h1>
+
+        {% if not days %}
+        <p class="hint">Прогноз на 7 дней, температура днём и ночью, осадки</p>
+        {% endif %}
+
+        <form class="search" method="POST">
+            <input type="text" name="city" placeholder="Твой город" value="{{ city }}" required>
+            <button type="submit">Показать</button>
+        </form>
+
+        {% if error %}
+        <p class="error">{{ error }}</p>
+        {% endif %}
+
+        {% if days %}
+        <section class="result">
+            <p class="city">{{ city }}</p>
+            <p class="icon">{{ now.icon }}</p>
+            <p class="temp">{{ now.temp }}°</p>
+            <p class="text">{{ now.text }} · ветер {{ now.wind }} км/ч</p>
+
+            <div class="days">
+                {% for day in days %}
+                <div class="day">
+                    <span class="day-name">{{ day.name }}</span>
+                    <span class="day-icon">{{ day.icon }}</span>
+                    <span class="day-rain">{% if day.rain > 0 %}💧 {{ day.rain }} мм{% endif %}</span>
+                    <span class="day-temp"><b>{{ day.max }}°</b> <i>{{ day.min }}°</i></span>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+        {% endif %}
+    </main>
+
+</body>
+</html>

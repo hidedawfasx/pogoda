@@ -1,0 +1,422 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 24px 16px;
+    font-family: "Inter", "Segoe UI", system-ui, sans-serif;
+    color: white;
+    overflow-x: hidden;
+}
+
+.sky {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    background: linear-gradient(#2f8fe8 0%, #6bb8f5 55%, #bfe3ff 100%);
+}
+
+.sky::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    background: linear-gradient(#050816 0%, #111a3d 55%, #2a3a72 100%);
+    animation: night 40s linear infinite;
+}
+
+.sky::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    opacity: 0;
+    background-image:
+        radial-gradient(2px 2px at 12% 18%, white, transparent),
+        radial-gradient(2px 2px at 30% 8%, white, transparent),
+        radial-gradient(1.5px 1.5px at 48% 22%, white, transparent),
+        radial-gradient(2px 2px at 66% 12%, white, transparent),
+        radial-gradient(1.5px 1.5px at 82% 26%, white, transparent),
+        radial-gradient(2px 2px at 92% 9%, white, transparent),
+        radial-gradient(1.5px 1.5px at 22% 38%, white, transparent),
+        radial-gradient(2px 2px at 74% 42%, white, transparent),
+        radial-gradient(1px 1px at 56% 6%, white, transparent),
+        radial-gradient(1px 1px at 38% 30%, white, transparent),
+        radial-gradient(1px 1px at 88% 40%, white, transparent),
+        radial-gradient(1px 1px at 6% 44%, white, transparent);
+    animation: night 40s linear infinite;
+}
+
+.orbit {
+    --r: min(70vh, 90vw);
+    --size: 90px;
+    position: fixed;
+    left: 50%;
+    top: 100%;
+    width: 0;
+    height: 0;
+    z-index: 1;
+    animation: spin 40s linear infinite;
+}
+
+.sun,
+.moon {
+    position: absolute;
+    width: var(--size);
+    height: var(--size);
+    left: calc(var(--size) / -2);
+    border-radius: 50%;
+    animation: unspin 40s linear infinite;
+}
+
+.sun::before,
+.moon::before {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    pointer-events: none;
+    border-radius: 50%;
+}
+
+.sun {
+    top: calc(var(--r) * -1 - var(--size) / 2);
+    background: radial-gradient(circle at 38% 36%, #fffef2 0%, #fff0a0 25%, #ffd24a 55%, #ffa116 85%, #ff8a00 100%);
+    box-shadow:
+        0 0 30px 10px rgba(255, 220, 110, 0.9),
+        0 0 80px 40px rgba(255, 190, 70, 0.5),
+        inset -8px -8px 20px rgba(255, 120, 0, 0.35);
+}
+
+.sun::before {
+    width: 420%;
+    height: 420%;
+    left: -160%;
+    top: -160%;
+    background: radial-gradient(circle, rgba(255, 235, 160, 0.55) 0%, rgba(255, 200, 100, 0.22) 30%, transparent 62%);
+    animation: glow 5s ease-in-out infinite;
+}
+
+.moon {
+    top: calc(var(--r) - var(--size) / 2);
+    background:
+        radial-gradient(circle at 32% 38%, rgba(120, 130, 160, 0.55) 7%, transparent 8%),
+        radial-gradient(circle at 58% 28%, rgba(120, 130, 160, 0.4) 5%, transparent 6%),
+        radial-gradient(circle at 66% 58%, rgba(120, 130, 160, 0.55) 10%, transparent 11%),
+        radial-gradient(circle at 40% 70%, rgba(120, 130, 160, 0.4) 6%, transparent 7%),
+        radial-gradient(circle at 24% 62%, rgba(120, 130, 160, 0.35) 4%, transparent 5%),
+        radial-gradient(circle at 72% 30%, rgba(120, 130, 160, 0.3) 3%, transparent 4%),
+        radial-gradient(circle at 35% 32%, #ffffff 0%, #eceff6 40%, #c3cadb 80%, #a3acc4 100%);
+    box-shadow:
+        0 0 40px 10px rgba(200, 215, 255, 0.4),
+        inset -14px -10px 28px rgba(70, 80, 120, 0.55);
+}
+
+.moon::before {
+    width: 300%;
+    height: 300%;
+    left: -100%;
+    top: -100%;
+    background: radial-gradient(circle, rgba(190, 210, 255, 0.28) 0%, transparent 60%);
+}
+
+.clouds {
+    position: fixed;
+    inset: 0;
+    z-index: 2;
+    pointer-events: none;
+    animation: dim 40s linear infinite;
+}
+
+.cloud {
+    position: absolute;
+    left: 0;
+    transform: translateX(-400px);
+    animation: drift linear infinite;
+}
+
+.cloud:nth-child(1) { top: 10%; animation-duration: 100s; animation-delay: -30s; }
+.cloud:nth-child(2) { top: 28%; animation-duration: 130s; animation-delay: -80s; opacity: 0.85; }
+.cloud:nth-child(3) { top: 52%; animation-duration: 110s; animation-delay: -50s; }
+.cloud:nth-child(4) { top: 70%; animation-duration: 150s; animation-delay: -110s; opacity: 0.8; }
+.cloud:nth-child(5) { top: 84%; animation-duration: 120s; animation-delay: -70s; opacity: 0.9; }
+
+.cloud:nth-child(2) .puff { scale: 1.5; }
+.cloud:nth-child(4) .puff { scale: 1.3; }
+
+.puff {
+    position: relative;
+    width: 320px;
+    height: 100px;
+    filter: blur(4px);
+    pointer-events: auto;
+    cursor: pointer;
+    background:
+        radial-gradient(ellipse 22% 42% at 16% 62%, rgba(255, 255, 255, 0.85), transparent 100%),
+        radial-gradient(ellipse 26% 55% at 38% 48%, rgba(255, 255, 255, 0.95), transparent 100%),
+        radial-gradient(ellipse 28% 50% at 62% 55%, rgba(255, 255, 255, 0.9), transparent 100%),
+        radial-gradient(ellipse 22% 38% at 84% 64%, rgba(255, 255, 255, 0.8), transparent 100%);
+}
+
+.puff::before,
+.puff::after {
+    content: "";
+    position: absolute;
+    transition: transform 1.2s ease;
+    animation: breathe 9s ease-in-out infinite;
+}
+
+.puff::before {
+    width: 200px;
+    height: 100px;
+    top: -34px;
+    left: 40px;
+    background:
+        radial-gradient(ellipse 34% 52% at 30% 58%, rgba(255, 255, 255, 0.9), transparent 100%),
+        radial-gradient(ellipse 30% 46% at 66% 46%, rgba(255, 255, 255, 0.85), transparent 100%);
+}
+
+.puff::after {
+    width: 230px;
+    height: 110px;
+    top: -26px;
+    left: 100px;
+    background:
+        radial-gradient(ellipse 32% 50% at 28% 50%, rgba(255, 255, 255, 0.85), transparent 100%),
+        radial-gradient(ellipse 36% 56% at 66% 60%, rgba(255, 255, 255, 0.9), transparent 100%);
+    animation-delay: -4s;
+}
+
+.puff:hover {
+    animation: sway 2.4s ease-in-out infinite;
+}
+
+.puff:hover::before {
+    transform: translate(-22px, -8px) scale(1.12);
+}
+
+.puff:hover::after {
+    transform: translate(24px, -10px) scale(1.14);
+}
+
+.card {
+    position: relative;
+    z-index: 3;
+    width: 100%;
+    max-width: 420px;
+    padding: 32px 26px;
+    text-align: center;
+    border-radius: 28px;
+    background: rgba(255, 255, 255, 0.16);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
+    -webkit-backdrop-filter: blur(18px);
+    backdrop-filter: blur(18px);
+    animation: appear 0.7s;
+}
+
+.title {
+    margin: 0 0 8px;
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    opacity: 0.85;
+}
+
+.hint {
+    margin: 0 0 20px;
+    font-size: 14px;
+    opacity: 0.75;
+}
+
+.search {
+    display: flex;
+    max-width: 300px;
+    margin: 0 auto;
+    padding: 5px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.22);
+}
+
+.search input {
+    flex: 1;
+    min-width: 0;
+    padding: 8px 14px;
+    font-size: 16px;
+    color: white;
+    background: transparent;
+    border: none;
+    outline: none;
+}
+
+.search input::placeholder {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.search button {
+    padding: 8px 16px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #1d4ed8;
+    background: white;
+    border: none;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.search button:hover {
+    transform: scale(1.05);
+}
+
+.error {
+    margin: 18px 0 0;
+    color: #ffd1d1;
+}
+
+.result {
+    margin-top: 28px;
+    animation: appear 0.7s;
+}
+
+.city {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 500;
+}
+
+.icon {
+    margin: 6px 0 0;
+    font-size: 64px;
+    animation: float 4s ease-in-out infinite;
+}
+
+.temp {
+    margin: 0;
+    font-size: 80px;
+    font-weight: 200;
+    line-height: 1;
+}
+
+.text {
+    margin: 8px 0 0;
+    opacity: 0.85;
+}
+
+.days {
+    margin-top: 28px;
+    text-align: left;
+}
+
+.day {
+    display: grid;
+    grid-template-columns: 80px 40px 1fr auto;
+    align-items: center;
+    padding: 10px 8px;
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+    transition: background 0.2s;
+}
+
+.day:hover {
+    background: rgba(255, 255, 255, 0.12);
+}
+
+.day-icon {
+    font-size: 22px;
+}
+
+.day-rain {
+    font-size: 13px;
+    opacity: 0.8;
+}
+
+.day-temp b {
+    font-weight: 600;
+}
+
+.day-temp i {
+    margin-left: 6px;
+    font-style: normal;
+    opacity: 0.6;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+@keyframes unspin {
+    to { transform: rotate(-360deg); }
+}
+
+@keyframes glow {
+    0%, 100% { transform: scale(1); opacity: 0.85; }
+    50% { transform: scale(1.12); opacity: 1; }
+}
+
+@keyframes night {
+    0%, 16%, 84%, 100% { opacity: 0; }
+    30%, 70% { opacity: 1; }
+}
+
+@keyframes dim {
+    0%, 16%, 84%, 100% { filter: brightness(1); }
+    30%, 70% { filter: brightness(0.4); }
+}
+
+@keyframes drift {
+    from { transform: translateX(-400px); }
+    to { transform: translateX(calc(100vw + 400px)); }
+}
+
+@keyframes breathe {
+    0%, 100% { scale: 1; }
+    50% { scale: 1.1 0.94; }
+}
+
+@keyframes sway {
+    0%, 100% { transform: translateX(0) rotate(0deg); }
+    25% { transform: translateX(14px) rotate(1.5deg); }
+    75% { transform: translateX(-14px) rotate(-1.5deg); }
+}
+
+@keyframes appear {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+}
+
+@media (max-width: 600px) {
+    .orbit {
+        --size: 64px;
+    }
+
+    .card {
+        padding: 26px 16px;
+        border-radius: 22px;
+    }
+
+    .temp {
+        font-size: 64px;
+    }
+
+    .day {
+        grid-template-columns: 70px 34px 1fr auto;
+        padding: 9px 4px;
+    }
+}
+
+@media (min-width: 1200px) {
+    .orbit {
+        --size: 120px;
+    }
+}
